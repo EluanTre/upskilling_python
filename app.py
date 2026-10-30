@@ -26,6 +26,15 @@ CROSS JOIN food_items;
 """
 solution = duckdb.sql(answer).df()
 
+with st.sidebar:
+    option = st.selectbox(
+        label="What would you like to review?",
+        options=("JOINS", "GROUP BY", "Window Functions"),
+        index=None,
+        placeholder="Select a theme..."
+    )
+    st.write(f"You selected: {option}")
+
 st.header("Enter your code:")
 query = st.text_area(label="votre code SQL ici :", key="user_input")
 
