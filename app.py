@@ -1,42 +1,47 @@
 import duckdb
 import pandas as pd
 import streamlit as st
+import io
 
-st.write("""
-# SQL SRS
-Spaced Regulation System SQL practice
-         """)
+csv = """
+beverage, price
+orange juice, 2.5
+expresso, 2
+tea, 3
+"""
+beverages = pd.read_csv(io.StringIO(csv))
 
-option = st.selectbox(
-    label="What would you like to review?",
-    options=("JOINS", "GROUP BY", "Window Functions"),
-    index=None,
-    placeholder="Select a theme..."
-)
-st.write(f"You selected: {option}")
+csv2 = """
+food_item, food_price
+cookie_juice, 2.5
+chocolatine, 2
+muffin, 3
+"""
+food_items = pd.read_csv(io.StringIO(csv2))
 
-data = {"a": [1, 2, 3], "b": [4, 5, 6]}
-df = pd.DataFrame(data)
+answer = """
+SELECT *
+FROM beverages
+CROSS JOIN food_items;
+"""
+solution = duckdb.sql(answer).df()
 
-tab1, tab2, tab3 = st.tabs(["Cat", "Dog", "Owl"])
+st.header("Enter your code:")
+query = st.text_area(label="votre code SQL ici :", key="user_input")
 
-with tab1:
-    try:
-        sql_query = st.text_area(label="Entrer votre requête SQL")
-        result = duckdb.sql(sql_query).df()
-        
-        st.write("Vous avez saisi la requête suivante :")
-        st.code(sql_query)
-    
-        st.dataframe(result)
-        
-    except (AttributeError, duckdb.BinderException, duckdb.ParserException) as e:
-        st.warning(f"Erreur : {e}")
+if query:
+    result = duckdb.sql(query).df()
+    st.dataframe(result)
+
+tab2, tab3 = st.tabs(["Table", "Solution"])
 
 with tab2:
-    st.header("A dog")
-    st.image("https://static.streamlit.io/examples/dog.jpg", width=200)
+    st.write("Table: beverages")
+    st.dataframe(beverages)
+    st.write("Table: food_items")
+    st.dataframe(food_items)
+    st.write("Expected:")
+    st.dataframe(solution)
 
 with tab3:
-    st.header("An owl")
-    st.image("https://static.streamlit.io/examples/owl.jpg", width=200)
+    st.code(answer)
