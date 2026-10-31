@@ -1,37 +1,41 @@
+# pylint: disable=missing-module-docstring
+# pylint: disable=trailing-whitespace
+
+import io
+
 import duckdb
 import pandas as pd
 import streamlit as st
-import io
 
-csv = """
-beverage, price
-orange juice, 2.5
-expresso, 2
-tea, 3
+CSV = """
+beverage,price
+orange juice,2.5
+expresso,2
+tea,3
 """
-beverages = pd.read_csv(io.StringIO(csv))
+beverages = pd.read_csv(io.StringIO(CSV))
 
-csv2 = """
-food_item, food_price
-cookie_juice, 2.5
-chocolatine, 2
-muffin, 3
+CSV2 = """
+food_item,food_price
+cookie_juice,2.5
+chocolatine,2
+muffin,3
 """
-food_items = pd.read_csv(io.StringIO(csv2))
+food_items = pd.read_csv(io.StringIO(CSV2))
 
-answer = """
+ANSWER_STR = """
 SELECT *
 FROM beverages
 CROSS JOIN food_items;
 """
-solution = duckdb.sql(answer).df()
+solution_df = duckdb.sql(ANSWER_STR).df()
 
 with st.sidebar:
     option = st.selectbox(
         label="What would you like to review?",
         options=("JOINS", "GROUP BY", "Window Functions"),
         index=None,
-        placeholder="Select a theme..."
+        placeholder="Select a theme...",
     )
     st.write(f"You selected: {option}")
 
@@ -42,7 +46,20 @@ if query:
     result = duckdb.sql(query).df()
     st.dataframe(result)
 
-tab2, tab3 = st.tabs(["Table", "Solution"])
+    n_lines_difference = result.shape[0] - solution_df.shape[0]
+    if n_lines_difference != 0:
+        st.warning(f"""
+            Result has a {n_lines_difference} 
+            lines difference with the solution_df
+            """)
+
+    try:
+        result = result[solution_df.columns]
+        st.dataframe(result.compare(solution_df))
+    except (KeyError, ValueError) as e:
+        st.error(f"Some columns are missing : {e}")
+
+tab2, tab3 = st.tabs(["Table", "solution_df"])
 
 with tab2:
     st.write("Table: beverages")
@@ -50,7 +67,7 @@ with tab2:
     st.write("Table: food_items")
     st.dataframe(food_items)
     st.write("Expected:")
-    st.dataframe(solution)
+    st.dataframe(solution_df)
 
 with tab3:
-    st.code(answer)
+    st.code(ANSWER_STR)
