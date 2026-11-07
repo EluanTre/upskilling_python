@@ -1,4 +1,6 @@
 .venv
 
 *.csv
+*.duckdb
+*.sql
 test.*
