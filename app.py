@@ -29,6 +29,15 @@ with duckdb.connect('data/file.duckdb') as conn:
             WHERE theme LIKE '{theme}';
             """).df()
         st.write(exercise)
+        
+        # Solution exercise
+        try:
+            exercise_name = exercise.loc[0, 'exercise_name']
+            with open(f'answers/{exercise_name}.sql', 'r') as f:
+                answer = f.read()         
+            solution_df = conn.execute(answer).df()
+        except (KeyError, FileNotFoundError):
+            st.error(f"Exercice non sélectionné / en cours d'écriture")
 
     # -----------------------------------------------------------------
     # -------------------- MAIN PAGE ---------------------
@@ -41,18 +50,18 @@ with duckdb.connect('data/file.duckdb') as conn:
         result = conn.execute(query).df()
         st.dataframe(result)
 
-    #     n_lines_difference = result.shape[0] - solution_df.shape[0]
-    #     if n_lines_difference != 0:
-    #         st.warning(f"""
-    #             Result has a {n_lines_difference} 
-    #             lines difference with the solution_df
-    #             """)
+        n_lines_difference = result.shape[0] - solution_df.shape[0]
+        if n_lines_difference != 0:
+            st.warning(f"""
+                Result has a {n_lines_difference} 
+                lines difference with the solution_df
+                """)
 
-    #     try:
-    #         result = result[solution_df.columns]
-    #         st.dataframe(result.compare(solution_df))
-    #     except (KeyError, ValueError) as e:
-    #         st.error(f"Some columns are missing : {e}")
+        try:
+            result = result[solution_df.columns]
+            st.dataframe(result.compare(solution_df))
+        except (KeyError, ValueError) as e:
+            st.error(f"Some columns are missing : {e}")
 
     tab1, tab2 = st.tabs(["Table", "solution_df"])
 
@@ -66,9 +75,6 @@ with duckdb.connect('data/file.duckdb') as conn:
 
     with tab2:
         try:
-            exercise_name = exercise.loc[0, 'exercise_name']
-            with open(f'answers/{exercise_name}.sql', 'r') as f:
-                answer = f.read()
             st.code(answer)
-        except KeyError:
+        except (KeyError, NameError):
             st.error(f"Exercice non sélectionné / en cours d'écriture")
