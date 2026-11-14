@@ -4,14 +4,7 @@
 import duckdb
 import streamlit as st
 
-with duckdb.connect('data/file.duckdb') as conn:
-
-    ANSWER_STR = """
-    SELECT *
-    FROM beverages
-    CROSS JOIN food_items;
-    """
-    # solution_df = duckdb.sql(ANSWER_STR).df()
+with duckdb.connect("data/file.duckdb") as conn:
 
     with st.sidebar:
         theme = st.selectbox(
@@ -21,28 +14,27 @@ with duckdb.connect('data/file.duckdb') as conn:
             placeholder="Select a theme...",
         )
         st.write(f"You selected: {theme}")
-        
-        exercise = conn.execute(
-            f"""
+
+        exercise = conn.execute(f"""
             SELECT * 
             FROM memory_state
             WHERE theme LIKE '{theme}';
             """).df()
         st.write(exercise)
-        
+
         # Solution exercise
         try:
-            exercise_name = exercise.loc[0, 'exercise_name']
-            with open(f'answers/{exercise_name}.sql', 'r') as f:
-                answer = f.read()         
+            exercise_name = exercise.loc[0, "exercise_name"]
+            with open(f"answers/{exercise_name}.sql", "r", encoding="utf-8") as f:
+                answer = f.read()
             solution_df = conn.execute(answer).df()
         except (KeyError, FileNotFoundError):
-            st.error(f"Exercice non sélectionné / en cours d'écriture")
+            st.error("Exercice non sélectionné / en cours d'écriture")
 
     # -----------------------------------------------------------------
     # -------------------- MAIN PAGE ---------------------
     # -----------------------------------------------------------------
-    
+
     st.header("Enter your code:")
     query = st.text_area(label="votre code SQL ici :", key="user_input")
 
@@ -67,14 +59,14 @@ with duckdb.connect('data/file.duckdb') as conn:
 
     with tab1:
         try:
-            for table in exercise.loc[0, 'tables']:
-                st.write(f'Table: {table}')
+            for table in exercise.loc[0, "tables"]:
+                st.write(f"Table: {table}")
                 st.dataframe(conn.execute(f"SELECT * FROM {table}").df())
         except (KeyError, duckdb.CatalogException):
-            st.error(f"Exercice non sélectionné / en cours d'écriture")
+            st.error("Exercice non sélectionné / en cours d'écriture")
 
     with tab2:
         try:
             st.code(answer)
         except (KeyError, NameError):
-            st.error(f"Exercice non sélectionné / en cours d'écriture")
+            st.error("Exercice non sélectionné / en cours d'écriture")
