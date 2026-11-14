@@ -4,7 +4,7 @@
 import duckdb
 import streamlit as st
 
-with duckdb.connect('data/file.duckdb') as con:
+with duckdb.connect('data/file.duckdb') as conn:
 
     ANSWER_STR = """
     SELECT *
@@ -22,7 +22,7 @@ with duckdb.connect('data/file.duckdb') as con:
         )
         st.write(f"You selected: {theme}")
         
-        exercise = con.execute(
+        exercise = conn.execute(
             f"""
             SELECT * 
             FROM memory_state
@@ -30,12 +30,16 @@ with duckdb.connect('data/file.duckdb') as con:
             """).df()
         st.write(exercise)
 
+    # -----------------------------------------------------------------
+    # -------------------- MAIN PAGE ---------------------
+    # -----------------------------------------------------------------
+    
     st.header("Enter your code:")
     query = st.text_area(label="votre code SQL ici :", key="user_input")
 
-    # if query:
-    #     result = duckdb.sql(query).df()
-    #     st.dataframe(result)
+    if query:
+        result = conn.execute(query).df()
+        st.dataframe(result)
 
     #     n_lines_difference = result.shape[0] - solution_df.shape[0]
     #     if n_lines_difference != 0:
@@ -50,16 +54,21 @@ with duckdb.connect('data/file.duckdb') as con:
     #     except (KeyError, ValueError) as e:
     #         st.error(f"Some columns are missing : {e}")
 
-    # tab2, tab3 = st.tabs(["Table", "solution_df"])
+    tab1, tab2 = st.tabs(["Table", "solution_df"])
 
-    # with tab2:
-    #     st.write("Table: beverages")
-    #     st.dataframe(beverages)
-    #     st.write("Table: food_items")
-    #     st.dataframe(food_items)
-    #     st.write("Expected:")
-    #     st.dataframe(solution_df)
+    with tab1:
+        try:
+            for table in exercise.loc[0, 'tables']:
+                st.write(f'Table: {table}')
+                st.dataframe(conn.execute(f"SELECT * FROM {table}").df())
+        except (KeyError, duckdb.CatalogException):
+            st.error(f"Exercice non sélectionné / en cours d'écriture")
 
-    # with tab3:
-    #     st.code(ANSWER_STR)
-
+    with tab2:
+        try:
+            exercise_name = exercise.loc[0, 'exercise_name']
+            with open(f'answers/{exercise_name}.sql', 'r') as f:
+                answer = f.read()
+            st.code(answer)
+        except KeyError:
+            st.error(f"Exercice non sélectionné / en cours d'écriture")
