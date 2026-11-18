@@ -1,8 +1,19 @@
 # pylint: disable=missing-module-docstring
 # pylint: disable=trailing-whitespace
+import os
 
 import duckdb
+import logging
 import streamlit as st
+
+if "data" not in os.listdir():
+    print("creating folder data")
+    logging.error(os.listdir())
+    logging.error("creating folder data")
+    os.mkdir('data')
+    
+if "fil.duckdb" not in os.listdir('data'):
+    exec(open('init_db.py').read())
 
 with duckdb.connect("data/file.duckdb") as conn:
 
